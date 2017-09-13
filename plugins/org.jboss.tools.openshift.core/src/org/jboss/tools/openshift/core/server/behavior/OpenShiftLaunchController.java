@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.jboss.tools.openshift.core.server.behavior;
 
+import static org.jboss.tools.openshift.common.core.utils.StringUtils.getStringOrDefaultsOrFail;
 import static org.jboss.tools.openshift.core.server.OpenShiftServerUtils.toCoreException;
 
 import java.io.IOException;
@@ -17,7 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -171,17 +171,33 @@ public class OpenShiftLaunchController extends AbstractSubsystemController imple
 		}
 	}
 
-	protected DebugContext createDebugContext(OpenShiftServerBehaviour beh, IProgressMonitor monitor) {
+	protected final DebugContext createDebugContext(OpenShiftServerBehaviour beh, IProgressMonitor monitor) 
+					throws CoreException {
+		return createDebugContext(beh, getDefaultDevmodeKey(), getDefaultDebugPortKey(), getDefaultDebugPort(), monitor);
+	}
+
+	protected DebugContext createDebugContext(OpenShiftServerBehaviour beh, 
+			String defaultDevmodeKey, String defaultDebugPortKey, String defaultDebugPort, IProgressMonitor monitor) 
+					throws CoreException {
 		monitor.subTask("Initialising debugging...");
 
 		DockerImageLabels imageLabels = getDockerImageLabels(beh, monitor);
 		IServer server = beh.getServer();
-		String devmodeKey = StringUtils.defaultIfBlank(
-				OpenShiftServerUtils.getDevmodeKey(server), imageLabels.getDevmodeKey());
-		String debugPortKey = StringUtils.defaultIfBlank(
-				OpenShiftServerUtils.getDebugPortKey(server), imageLabels.getDevmodePortKey());
-		String debugPort = StringUtils.defaultIfBlank(
-				OpenShiftServerUtils.getDebugPort(server), imageLabels.getDevmodePortValue());
+		String devmodeKey = getStringOrDefaultsOrFail(
+				OpenShiftServerUtils.getDevmodeKey(server), 
+				imageLabels.getDevmodeKey(),
+				defaultDevmodeKey,
+				"No env var key for the devmode was found, neiter in user settings, docker image labels nor defaults.");
+		String debugPortKey = getStringOrDefaultsOrFail(
+				OpenShiftServerUtils.getDebugPortKey(server), 
+				imageLabels.getDevmodePortKey(),
+				defaultDebugPortKey,
+				"No env var key for the debug port was found, neiter in user settings, docker image labels nor defaults.");
+		String debugPort = getStringOrDefaultsOrFail(
+				OpenShiftServerUtils.getDebugPort(server), 
+				imageLabels.getDevmodePortValue(),
+				defaultDebugPort,
+				"No debug port was found, neiter in user settings, docker image labels nor defaults.");
 		return new DebugContext(beh.getServer(), devmodeKey, debugPortKey, debugPort);
 	}
 
@@ -490,5 +506,34 @@ public class OpenShiftLaunchController extends AbstractSubsystemController imple
 				}
 			}
 		};
+	}
+
+	/**
+	 * Returns the default env var key to enable/disable devmode in a deployment
+	 * config/replication controller
+	 * 
+	 * @return
+	 */
+	protected String getDefaultDevmodeKey() {
+		return "DEV_MODE";
+	}
+
+	/**
+	 * Returns the default env var key to set the debug port in a deployment
+	 * config/replication controller
+	 * 
+	 * @return
+	 */
+	protected String getDefaultDebugPortKey() {
+		return "DEBUG_PORT";
+	}
+
+	/**
+	 * Returns the default debug port in a deployment config/replication controller
+	 * 
+	 * @return
+	 */
+	protected String getDefaultDebugPort() {
+		return "8787";
 	}
 }

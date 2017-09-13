@@ -25,10 +25,6 @@ import com.openshift.restclient.model.IPod;
  */
 public class DebugContext {
 	
-	public static final String DEFAULT_DEVMODE_KEY = "DEV_MODE";
-	public static final String DEFAULT_DEBUG_PORT_KEY = "DEBUG_PORT";
-	public static final String DEFAULT_DEBUG_PORT = "8787";
-
 	public static final int NO_DEBUG_PORT = -1;
 
 	private IServer server;
@@ -39,10 +35,6 @@ public class DebugContext {
 	private int debugPort = NO_DEBUG_PORT;
 	private IDebugListener listener;
 	private IPod pod;
-
-	public DebugContext(IServer server) {
-		this(server, DEFAULT_DEVMODE_KEY, DEFAULT_DEBUG_PORT_KEY, DEFAULT_DEBUG_PORT);
-	}
 
 	/**
 	 * Creates a debugging context instance for the given server behaviour with the

@@ -93,4 +93,30 @@ public class OpenShiftNodejsLaunchController extends OpenShiftLaunchController i
 		context.setDebugListener(listener);
 		new OpenShiftDebugMode(context).enableDebugging();
 	}
+
+	@Override
+	protected String getDefaultDevmodeKey() {
+		// TODO Auto-generated method stub
+		return super.getDefaultDevmodeKey();
+	}
+
+	@Override
+	protected String getDefaultDebugKey() {
+		// TODO Auto-generated method stub
+		return super.getDefaultDebugKey();
+	}
+
+	@Override
+	protected String getDefaultDebugPortKey() {
+		// TODO Auto-generated method stub
+		return super.getDefaultDebugPortKey();
+	}
+
+	@Override
+	protected String getDefaultPodDeployPath() {
+		// TODO Auto-generated method stub
+		return super.getDefaultPodDeployPath();
+	}
+	
+	
 }

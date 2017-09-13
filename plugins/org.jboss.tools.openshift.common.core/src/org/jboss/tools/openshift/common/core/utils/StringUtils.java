@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.WordUtils;
+import org.eclipse.core.runtime.CoreException;
+import org.jboss.tools.foundation.core.plugin.log.StatusFactory;
+import org.jboss.tools.openshift.internal.common.core.OpenShiftCommonCoreActivator;
 
 /**
  * @author André Dietisheim
@@ -321,4 +324,30 @@ public class StringUtils {
 
 		return value.replaceAll(regex, "");
 	}
+
+	/**
+	 * Returns the value, fallback value, default value or throws a CoreException,
+	 * depending on whether the previous is empty (or null).
+	 * 
+	 * @param value
+	 * @param fallbackValue
+	 * @param defaultValue
+	 * @param message
+	 * @return
+	 * @throws CoreException
+	 */
+	public static String getStringOrDefaultsOrFail(String value, String fallbackValue, String defaultValue, String message)
+			throws CoreException {
+		if (!isEmpty(value)) {
+			return value;
+		}
+		if (!isEmpty(fallbackValue)) {
+			return fallbackValue;
+		}
+		if (!isEmpty(defaultValue)) {
+			throw new CoreException(StatusFactory.errorStatus(OpenShiftCommonCoreActivator.PLUGIN_ID, message));
+		}
+		return defaultValue;
+	}
+
 }

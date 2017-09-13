@@ -105,9 +105,9 @@ public class OpenShiftDebugModeTest {
 	public void debuggingContextShouldDefaultToDefaultDebugPortAndDebuggingNotEnabled() {
 		// given
 		// when
-		DebugContext context = new DebugContext(server);
+		DebugContext context = new DebugContext(server, "devmodeKey", "debugPortKey", "4242");
 		// then
-		assertThat(context.getDebugPort()).isEqualTo(toInt(DebugContext.DEFAULT_DEBUG_PORT));
+		assertThat(context.getDebugPort()).isEqualTo(4242);
 		assertThat(context.isDebugEnabled()).isFalse();
 	}
 

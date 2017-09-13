@@ -217,4 +217,14 @@ public class OpenShiftPublishController extends StandardFileSystemPublishControl
 	protected void launchUpdateModuleStateJob() throws CoreException {
 		// No-op for now, until other problems are fixed
 	}
+	
+	/**
+	 * Returns the default path in a pod that the server adapter should publish to
+	 * 
+	 * @return
+	 */
+	protected String getDefaultPodDeployPath() {
+		return null;
+	}
+
 }
