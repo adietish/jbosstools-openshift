@@ -38,7 +38,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IResource;
 
 /**
@@ -137,43 +136,6 @@ public class OpenShiftServerUtilsTest {
 		assertThat(resource).isEqualTo(ResourceMocks.PROJECT2_SERVICES[1]);
 	}
 
-	@Test
-	public void should_return_deploymentconfig() throws CoreException {
-		// given
-		// when
-		IDeploymentConfig deploymentConfig = (IDeploymentConfig) OpenShiftServerUtils.getDeploymentConfig(server, new NullProgressMonitor());
-		// then
-		assertThat(deploymentConfig).isEqualTo(ResourceMocks.PROJECT2_DEPLOYMENTCONFIGS[2]);
-	}
-
-	@Test
-	public void should_throw_exception_no_connection() throws UnsupportedEncodingException, MalformedURLException {
-		// given
-		// when
-		try {
-			OpenShiftServerUtils.getDeploymentConfig(
-				OpenShiftServerTestUtils.mockServer(ResourceMocks.PROJECT2_SERVICES[0], null), new NullProgressMonitor());
-		// then
-			fail("CoreException expected");
-		} catch(CoreException e) {
-			assertThat(e.getMessage()).contains("not find the connection");
-		}
-	}
-
-	@Test
-	public void should_throw_exception_no_deployconfig_name_in_pod_labels() throws CoreException, UnsupportedEncodingException, MalformedURLException {
-		// given
-		// when
-		try {
-			OpenShiftServerUtils.getDeploymentConfig(
-				OpenShiftServerTestUtils.mockServer(ResourceMocks.PROJECT2_SERVICES[3], connection), new NullProgressMonitor());
-		// then
-			fail("CoreException expected");
-		} catch(CoreException e) {
-			assertThat(e.getMessage()).contains("not find deployment config");
-		}
-	}
-	
 	@Test
 	public void shouldNotShowJmxOnNonJavaProject() throws CoreException {
 	    IProject eclipseProject = ResourceMocks.createEclipseProject("project1");
