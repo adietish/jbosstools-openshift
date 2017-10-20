@@ -20,11 +20,13 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.jboss.tools.common.ui.WizardUtils;
 import org.jboss.tools.openshift.core.connection.Connection;
 import org.jboss.tools.openshift.core.connection.ConnectionsRegistryUtil;
 import org.jboss.tools.openshift.internal.common.ui.utils.UIUtils;
+import org.jboss.tools.openshift.internal.common.ui.wizard.OkCancelButtonWizardDialog;
 import org.jboss.tools.openshift.internal.core.util.ResourceUtils;
 import org.jboss.tools.openshift.internal.ui.OpenShiftUIActivator;
 import org.jboss.tools.openshift.internal.ui.OpenShiftUIMessages;
@@ -54,7 +56,7 @@ public class EditResourceLimitsHandler extends AbstractHandler {
                             "Could not edit resources {0}: Could not find deployment config or replication controller",
                             resource == null ? "" : resource.getName()));
         }
-        editResources(event, dcOrRc, dcOrRc.getName());
+        editResources(HandlerUtil.getActiveShell(event), dcOrRc, dcOrRc.getName());
         return null;
     }
 
@@ -85,10 +87,10 @@ public class EditResourceLimitsHandler extends AbstractHandler {
         return rcOrDc;
     }
 
-    protected void editResources(ExecutionEvent event, IReplicationController rc, String name) {
+    protected void editResources(Shell shell, IReplicationController rc, String name) {
         EditResourceLimitsPageModel model = new EditResourceLimitsPageModel(rc);
         EditResourceLimitsWizard wizard = new EditResourceLimitsWizard(model, "Edit resource limits");
-        WizardUtils.openWizardDialog(wizard, HandlerUtil.getActiveShell(event));
+        new OkCancelButtonWizardDialog(shell, wizard).open();
      }
     
     class EditResourceLimitsWizard extends Wizard {
