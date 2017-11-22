@@ -395,7 +395,7 @@ public class ServerSettingsWizardPage extends AbstractOpenShiftWizardPage implem
 			.grab(true, false)
 			.applyTo(container);
 		GridLayoutFactory.fillDefaults()
-			.numColumns(4).margins(10,10).spacing(4, 4)
+			.numColumns(4).margins(10,10).spacing(15, 4)
 			.applyTo(container);
 
 		createProjectControls(container, model, dbc);
