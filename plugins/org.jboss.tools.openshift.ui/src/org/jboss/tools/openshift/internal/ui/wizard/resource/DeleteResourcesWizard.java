@@ -271,7 +271,9 @@ public class DeleteResourcesWizard extends AbstractOpenShiftWizard<DeleteResourc
 				IResource resource = (IResource) cell.getElement();
 				Map<String, String> filteredLabels = ResourceUtils.getMatchingLabels(filter, resource);
 				createCellLabel(filter, filteredLabels, cell);
-				((Table) cell.getControl()).getColumn(cell.getColumnIndex()).pack();
+				Table table = (Table) cell.getControl();
+				table.getColumn(cell.getColumnIndex()).pack();
+				table.redraw();
 			}
 
 			private void createCellLabel(KeyValueFilter filter, Map<String, String> labels, ViewerCell cell) {
