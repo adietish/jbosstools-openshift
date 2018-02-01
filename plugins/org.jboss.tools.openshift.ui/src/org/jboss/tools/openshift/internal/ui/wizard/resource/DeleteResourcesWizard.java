@@ -8,7 +8,6 @@
  ******************************************************************************/
 package org.jboss.tools.openshift.internal.ui.wizard.resource;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +41,13 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.jboss.tools.common.ui.DelegatingProgressMonitor;
-import org.jboss.tools.common.ui.WizardUtils;
 import org.jboss.tools.common.ui.databinding.ValueBindingBuilder;
 import org.jboss.tools.foundation.ui.jobs.DisableAllWidgetsJob;
 import org.jboss.tools.openshift.common.core.utils.StringUtils;
@@ -236,23 +235,19 @@ public class DeleteResourcesWizard extends AbstractOpenShiftWizard<DeleteResourc
 		}
 
 		private void loadResources(DataBindingContext dbc) {
-			DelegatingProgressMonitor delegatingMonitor = new DelegatingProgressMonitor();
-			Job job = new JobChainBuilder(new DisableAllWidgetsJob(true, (Composite) getControl(), null))
+			final Cursor busyCursor = new Cursor(getContainer().getShell().getDisplay(), SWT.CURSOR_WAIT);
+			final Composite container = (Composite) getControl();
+			final DelegatingProgressMonitor delegatingMonitor = new DelegatingProgressMonitor();
+			Job job = new JobChainBuilder(new DisableAllWidgetsJob(true, container, true, busyCursor, dbc))
 					.runWhenDone(new Job("Retrieving all resources from server...") {
-
 						@Override
 						protected IStatus run(IProgressMonitor monitor) {
 							delegatingMonitor.add(monitor);
 							model.loadResources(delegatingMonitor);
 							return Status.OK_STATUS;
 						}
-					}).runWhenDone(new DisableAllWidgetsJob(false, (Composite) getControl(), null)).build();
-			try {
-				WizardUtils.runInWizard(job, delegatingMonitor, getContainer(), dbc);
-			} catch (InvocationTargetException | InterruptedException e) {
-				// ignore
-			}
-
+					}).runWhenDone(new DisableAllWidgetsJob(false, container, false, busyCursor, dbc)).build();
+			job.schedule();
 		}
 
 		public void deleteResources() {

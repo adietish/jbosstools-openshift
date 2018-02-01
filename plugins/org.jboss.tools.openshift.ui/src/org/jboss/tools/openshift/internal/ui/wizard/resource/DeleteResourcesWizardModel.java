@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.osgi.util.NLS;
 import org.jboss.tools.common.databinding.ObservablePojo;
 import org.jboss.tools.openshift.common.core.utils.StringUtils;
@@ -75,6 +76,8 @@ public class DeleteResourcesWizardModel extends ObservablePojo {
 	}
 
 	private List<IResource> loadAllResources(IProgressMonitor monitor) {
+		monitor.beginTask("Loading all resources...", ALL_RESOURCE_KINDS.length);
+
 		return Arrays.stream(ALL_RESOURCE_KINDS)
 				.flatMap(resourceKind -> safeLoadResources(resourceKind, namespace, connection, monitor).stream())
 				.collect(Collectors.toList());
@@ -83,8 +86,10 @@ public class DeleteResourcesWizardModel extends ObservablePojo {
 	private Collection<IResource> safeLoadResources(String resourceKind, String namespace, Connection connection,
 			IProgressMonitor monitor) {
 		try {
-			monitor.subTask(NLS.bind("Loading all {0} resources...", resourceKind));
-
+			SubMonitor mon = SubMonitor.convert(monitor);
+			mon.setTaskName(NLS.bind("Loading all {0} resources...", resourceKind));
+			mon.worked(1);
+			
 			return connection.getResources(resourceKind, namespace);
 		} catch (NotFoundException | ResourceForbiddenException e) {
 			return Collections.emptyList();
