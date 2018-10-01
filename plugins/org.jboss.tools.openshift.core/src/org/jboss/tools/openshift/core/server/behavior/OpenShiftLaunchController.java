@@ -13,11 +13,12 @@ package org.jboss.tools.openshift.core.server.behavior;
 import static org.jboss.tools.openshift.core.server.OpenShiftServerUtils.toCoreException;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -35,7 +36,6 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
 import org.eclipse.jdt.debug.core.IJavaHotCodeReplaceListener;
-import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.wst.server.core.IModule;
 import org.eclipse.wst.server.core.IServer;
@@ -46,13 +46,17 @@ import org.jboss.ide.eclipse.as.wtp.core.server.behavior.ILaunchServerController
 import org.jboss.ide.eclipse.as.wtp.core.server.behavior.ISubsystemController;
 import org.jboss.ide.eclipse.as.wtp.core.server.launch.ServerProcess;
 import org.jboss.tools.foundation.core.plugin.log.StatusFactory;
+import org.jboss.tools.openshift.common.core.connection.ConnectionsRegistryAdapter;
+import org.jboss.tools.openshift.common.core.connection.ConnectionsRegistrySingleton;
+import org.jboss.tools.openshift.common.core.connection.IConnection;
+import org.jboss.tools.openshift.common.core.connection.IConnectionsRegistryListener;
 import org.jboss.tools.openshift.core.OpenShiftCoreMessages;
 import org.jboss.tools.openshift.core.connection.Connection;
 import org.jboss.tools.openshift.core.server.DockerImageLabels;
 import org.jboss.tools.openshift.core.server.OpenShiftServerBehaviour;
 import org.jboss.tools.openshift.core.server.OpenShiftServerUtils;
-import org.jboss.tools.openshift.core.util.MavenProfile;
 import org.jboss.tools.openshift.core.util.MavenCharacter;
+import org.jboss.tools.openshift.core.util.MavenProfile;
 import org.jboss.tools.openshift.internal.core.OpenShiftCoreActivator;
 import org.jboss.tools.openshift.internal.core.portforwarding.PortForwardingUtils;
 import org.jboss.tools.openshift.internal.core.server.debug.DebugContext;
@@ -80,6 +84,8 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 	private static final int RECHECK_DELAY = 1000;
 	private static final long WAIT_FOR_DEPLOYMENTCONFIG_TIMEOUT = 3 * 60 * 1024;
 	private static final long WAIT_FOR_DOCKERIMAGELABELS_TIMEOUT = 3 * 60 * 1024;
+	
+	protected static final Map<IPod, IConnectionsRegistryListener> POD_LISTENERS = new HashMap<>();
 
 	@Override
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor)
@@ -94,6 +100,9 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 				DebugContext context = createDebugContext(beh, monitor);
 				setMode(mode, context, beh, monitor);
 				updateOpenShift(context, monitor);
+				if (DebugLaunchConfigs.isDebugMode(mode)) {
+				    createPodListener(beh, context, monitor);
+				}
 			}
 		} catch (Exception e) {
 			mode = currentMode;
@@ -314,6 +323,20 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 		new OpenShiftDebugMode(context).enableDebugging();
 		subMonitor.done();
 	}
+	
+	protected void createPodListener(OpenShiftServerBehaviour beh, DebugContext context, IProgressMonitor monitor) {
+	    IConnectionsRegistryListener podListener = new ConnectionsRegistryAdapter() {
+            @Override
+            public void connectionChanged(IConnection connection, String property, Object oldValue, Object newValue) {
+                if (newValue == null && oldValue instanceof IPod && oldValue.equals(context.getPod())) {
+                    stopDebugging(context, monitor);
+                    setServerState(beh, ILaunchManager.RUN_MODE, monitor);
+                }
+            }
+        };
+        ConnectionsRegistrySingleton.getInstance().addListener(podListener);
+        POD_LISTENERS.put(context.getPod(), podListener);
+	}
 
 	private void stopDebugging(DebugContext context, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, NLS.bind("Stopping debugging for server {0}", context.getServer().getName()), 1);
@@ -335,6 +358,7 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 		};
 		context.setDebugListener(listener);
 		new OpenShiftDebugMode(context).disableDebugging();
+		POD_LISTENERS.remove(context.getPod());
 		subMonitor.done();
 	}
 
