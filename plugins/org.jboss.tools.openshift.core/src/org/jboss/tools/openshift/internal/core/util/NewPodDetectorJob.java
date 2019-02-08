@@ -47,7 +47,6 @@ public class NewPodDetectorJob extends Job {
 	//TODO get timeout value from some settings
 	public static final int TIMEOUT = Integer.getInteger(DEPLOYMENT_CONFIG_LISTENER_JOB_TIMEOUT_KEY, 600_000);
 	private static final int SLEEP_DELAY = 100;
-	private static final String POD_STATE_RUNNING = "Running";
 
 	private IDeploymentConfig dc;
 	private IPod pod;
@@ -68,16 +67,11 @@ public class NewPodDetectorJob extends Job {
 
 			if (newValue instanceof IPod) {
 				IPod notifiedPod = (IPod) newValue;
-				if (isNewRunningRuntimePod(notifiedPod)) {
+				if (ResourceUtils.isNewRuntimePodFor(notifiedPod, dc)) {
 					// store new & running runtime pod for job to stop waiting
 					pod = notifiedPod;
 				}
 			}
-		}
-
-		private boolean isNewRunningRuntimePod(IPod pod) {
-			return ResourceUtils.isRuntimePod(pod) && !oldPods.contains(pod.getName())
-					&& POD_STATE_RUNNING.equals(pod.getStatus()) && ResourceUtils.areRelated(pod, dc);
 		}
 	};
 
@@ -101,8 +95,8 @@ public class NewPodDetectorJob extends Job {
 	private Collection<String> getOldPods(IReplicationController rc) {
 		Connection connection = ConnectionsRegistryUtil.getConnectionFor(rc);
 		List<IPod> allPods = connection.getResources(ResourceKind.POD, rc.getNamespaceName());
-		return ResourceUtils.getPodsFor(rc, allPods).stream().filter(pod -> ResourceUtils.isRuntimePod(pod))
-				.map(p -> p.getName()).collect(Collectors.toList());
+		return ResourceUtils.getPodsFor(rc, allPods).stream().filter(ResourceUtils::isRuntimePod)
+				.map(IPod::getName).collect(Collectors.toList());
 	}
 
 	private void waitForNewPod(IProgressMonitor monitor) {

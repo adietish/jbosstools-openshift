@@ -344,10 +344,10 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
                         }
                         
                     }, WAIT_FOR_NEW_DEBUG_POD_TIMEOUT);
-                } else if (newValue instanceof IPod 
-                        && ((IPod)newValue).getStatus().equals("Running") 
-                        && ResourceUtils.isRuntimePod((IPod)newValue) 
-                        && ResourceUtils.areRelated((IPod)newValue, ResourceUtils.getDeploymentConfigFor(resource, (Connection)connection))) {
+                } else if (newValue instanceof IPod
+                		&& (ResourceUtils.isNewRuntimePodFor(
+                				(IPod) newValue,
+            					ResourceUtils.getDeploymentConfigFor(resource, (Connection)connection)))) {
                     if (stopDebugTimer != null) {
                         stopDebugTimer.cancel();
                     }
