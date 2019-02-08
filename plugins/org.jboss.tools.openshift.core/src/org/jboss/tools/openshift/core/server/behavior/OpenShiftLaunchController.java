@@ -86,7 +86,7 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 	private static final long WAIT_FOR_DEPLOYMENTCONFIG_TIMEOUT = 3 * 60 * 1024;
 	private static final long WAIT_FOR_DOCKERIMAGELABELS_TIMEOUT = 3 * 60 * 1024;
 	private static final long WAIT_FOR_NEW_DEBUG_POD_TIMEOUT = 10_000; // 10 seconds
-	
+
 	protected static final Map<IServer, IConnectionsRegistryListener> POD_LISTENERS = new HashMap<>();
 
 	@Override
@@ -313,37 +313,37 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 		new OpenShiftDebugMode(context).enableDebugging();
 		subMonitor.done();
 	}
-	
+
 	protected void createPodListener(OpenShiftServerBehaviour beh, DebugContext context, IProgressMonitor monitor) {
 	    IResource resource = OpenShiftServerUtils.getResource(context.getServer(), monitor);
 	    IConnectionsRegistryListener podListener = new ConnectionsRegistryAdapter() {
 	        private Timer stopDebugTimer;
             @Override
             public void connectionChanged(IConnection connection, String property, Object oldValue, Object newValue) {
-                if (newValue == null && oldValue instanceof IPod && oldValue.equals(context.getPod())) {
-                    stopDebugTimer = new Timer(context.getPod().getName());
-                    stopDebugTimer.schedule(new TimerTask() {
+				if (newValue == null && oldValue instanceof IPod && oldValue.equals(context.getPod())) {
+					stopDebugTimer = new Timer(context.getPod().getName());
+					stopDebugTimer.schedule(new TimerTask() {
 
-                        @Override
-                        public void run() {
-                            stopDebugging(context, monitor);
-                            setServerState(beh, ILaunchManager.RUN_MODE, monitor);
-                        }
-                        
-                    }, WAIT_FOR_NEW_DEBUG_POD_TIMEOUT);
-                } else if (newValue instanceof IPod
-                		&& (ResourceUtils.isNewRuntimePodFor(
-                				(IPod) newValue,
-            					ResourceUtils.getDeploymentConfigFor(resource, (Connection)connection)))) {
-                    if (stopDebugTimer != null) {
-                        stopDebugTimer.cancel();
-                    }
-                    try {
-                    	OpenShiftDebugMode(context).execute(monitor);
-                    } catch (CoreException e) {
-                        OpenShiftCoreActivator.logError("Error occured while trying to launch debug on recovered pod", e);
-                    }
-                }
+						@Override
+						public void run() {
+							stopDebugging(context, monitor);
+							setServerState(beh, ILaunchManager.RUN_MODE, monitor);
+						}
+
+					}, WAIT_FOR_NEW_DEBUG_POD_TIMEOUT);
+				} else if (newValue instanceof IPod
+						&& (ResourceUtils.isNewRuntimePodFor(
+								(IPod) newValue, ResourceUtils.getDeploymentConfigFor(resource, (Connection) connection)))) {
+					if (stopDebugTimer != null) {
+						stopDebugTimer.cancel();
+					}
+					try {
+						new OpenShiftDebugMode(context).execute(monitor);
+					} catch (CoreException e) {
+						OpenShiftCoreActivator.logError("Error occured while trying to launch debug on recovered pod",
+								e);
+					}
+				}
             }
         };
         ConnectionsRegistrySingleton.getInstance().addListener(podListener);
@@ -528,28 +528,4 @@ public class OpenShiftLaunchController extends AbstractSubsystemController
 			}
 		};
 	}
-	
-	class ToggleDebuggingAndSetState extends Job {
-		
-		private String targetMode;
-		private String currentMode;
-		private IProject project;
-		private OpenShiftServerBehaviour behaviour;
-
-		ToggleDebuggingAndSetState(String mode, String currentMode, IProject project, OpenShiftServerBehaviour behaviour) {
-			super(NLS.bind("Setting up debugging for {0}", project.getName()));
-			this.targetMode = mode;
-			this.currentMode = currentMode;
-			this.project = project;
-			this.behaviour = behaviour;
-		}
-
-	@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			IStatus status = toggleDebugging(targetMode, behaviour, monitor);
-			setServerState(status, targetMode, currentMode, behaviour, monitor);
-			return status;
-		}
-	}
-
 }
