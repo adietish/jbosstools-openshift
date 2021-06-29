@@ -27,7 +27,7 @@
 		<slf4j-log4j12.version>2.0.0-alpha1</slf4j-log4j12.version>
 		<commons-codec.version>1.6</commons-codec.version>
 		<commons-lang.version>2.6</commons-lang.version>
-		<commons-io.version>2.1</commons-io.version>
+		<commons-io.version>2.9.0</commons-io.version>
 		<enforcer.skip>true</enforcer.skip>
 		<openshift-client.version>4.7.0</openshift-client.version>
 		<jackson.version>2.9.10</jackson.version>
@@ -232,7 +232,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute runOnConfiguration="true"></execute>
+										<execute runOnConfiguration="true"/>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
